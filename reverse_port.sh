@@ -7,13 +7,13 @@
 
 usage()
 {
-  echo "Usage: $0 HOST PORT [PORT_END]"
-  echo " |HOST|: What you'd normally type to ssh to remote."
-  echo "         e.g. user@hostname:sshport"
-  echo " |PORT|: Integer of port."
-  echo "         e.g. 9000"
-  echo " |PORT_END|: Optional. If given, PORT-PORT_END range will be forwarded."
-  echo "         e.g. 9020"
+  printf '%s\n' "Usage: $(basename "$0") <HOST> <PORT> [PORT_END]"
+  printf '\t%s\t\t%s\n' 'HOST'      "What you'd normally type to ssh into remote host"
+  printf '\t%s\t\t%s\n' '    '      "e.g. user@hostname, ssh-alias"
+  printf '\t%s\t\t%s\n' 'PORT'      "Integer of port"
+  printf '\t%s\t\t%s\n' '    '      "e.g. 9000"
+  printf '\t%s\t%s\n' 'PORT_END'    "Optional. If given, forwards a range of ports (PORT to PORT_END)"
+  printf '\t%s\t%s\n' '        '    "e.g. 9020"
 }
 
 check_integer()
@@ -25,7 +25,7 @@ check_integer()
 }
 
 if [ $# -ne 2 -a $# -ne 3 ]; then
-  echo "Must provide two or three arguments!"
+  echo "Must provide two or three arguments!\n"
   usage
   exit 1
 fi

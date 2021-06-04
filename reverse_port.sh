@@ -74,12 +74,14 @@ if [ -n "$MAP_TO" ]; then
 fi
 
 while [ $i -le $PORT_END ]; do
-  command="$command -L $(( $i + $offset )):localhost:$i"
+  target_port=$(( $i + $offset ))
+  echo ">> Access port $i via http://localhost:$target_port"
+  command="$command -L $target_port:localhost:$i"
   i=$(($i + 1))
 done
 
 
 # run
 
-echo ">> ssh -N $command $HOST"
+echo ">> Running command: ssh -N $command $HOST"
 ssh -N $command "$HOST"

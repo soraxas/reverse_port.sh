@@ -7,17 +7,22 @@
 
 usage()
 {
-  printf '%s\n' "Usage: $(basename "$0") <HOST> <PORT>-[PORT_END] [PORT_MAP_TO]"
-  printf '\t%s\t\t%s\n' 'HOST'          "What you'd normally type to ssh into remote host"
+  printf '%s\n' "Usage: $(basename "$0") <REMOTE_HOST> <PORT>-[PORT_END] [PORT_MAP_TO]"
+  printf '%s\n' "                        [-t|--tunnel TUNNEL_HOST]"
+  printf '\t%s\t%s\n' 'REMOTE_HOST'   "What you'd normally type to ssh into remote host"
+  printf '\t%s\t\t%s\n' '    '          "This is the host that your machine can directly connects to."
   printf '\t%s\t\t%s\n' '    '          "e.g. user@hostname, ssh-alias"
   printf '\t%s\t\t%s\n' 'PORT'          "Integer of port"
   printf '\t%s\t\t%s\n' '    '          "e.g. 9000"
-  printf '\t%s\t%s\n' 'PORT_END'        "Optional. If given, forwards a range of ports (PORT to PORT_END)"
+  printf '\t%s\t%s\n' 'PORT_END'        "[Optional] If given, forwards a range of ports (PORT to PORT_END)"
   printf '\t%s\t%s\n' '        '        "e.g. 9020"
-  printf '\t%s\t%s\n' 'PORT_MAP_TO'     "Optional. If given, maps PORT to this given port."
+  printf '\t%s\t%s\n' 'PORT_MAP_TO'     "[Optional] If given, maps PORT to this given port."
   printf '\t%s\t%s\n' '           '     "If forwarding a range of ports, the mapped port end is always implied"
   printf '\t%s\t%s\n' '           '     "as the corresponding offsetted ports."
   printf '\t%s\t%s\n' '        '        "e.g. 8000"
+  printf '\t%s\t%s\n' 'TUNNEL_HOST'     "[Optional] This is the target host of the tunnel."
+  printf '\t%s\t%s\n' '           '     "This should be a host that REMOTE_HOST can connects to."
+  printf '\t%s\t%s\n' '           '     "Defaults to 'localhost' (of the REMOTE_HOST)."
 }
 
 check_integer()
@@ -28,11 +33,53 @@ check_integer()
   esac
 }
 
+TUNNEL_HOST=localhost
+
+# shellcheck disable=SC2116,SC2028
+EOL=$(echo '\00\07\01\00')
+if [ "$#" != 0 ]; then
+  set -- "$@" "$EOL"
+  while [ "$1" != "$EOL" ]; do
+    opt="$1"; shift
+    case "$opt" in
+      -h|--help)
+        usage
+        exit 0
+        ;;
+      -t|--tunnel)
+        TUNNEL_HOST="$1"
+        if [ -n "TUNNEL_HOST" ]; then
+          usage
+          exit 1
+        fi
+        shift
+        ;;
+      --*=*)  # convert '--name=arg' to '--name' 'arg'
+        set -- "${opt%%=*}" "${opt#*=}" "$@";;
+      -[!-]?*)  # convert '-abc' to '-a' '-b' '-c'
+        # shellcheck disable=SC2046  # we want word splitting
+        set -- $(echo "${opt#-}" | sed 's/\(.\)/ -\1/g') "$@";;
+      --)  # process remaining arguments as positional
+        while [ "$1" != "$EOL" ]; do set -- "$@" "$1"; shift; done;;
+      -*)
+        echo "Error: Unsupported flag '$opt'" >&2
+        exit 1
+        ;;
+      *)
+        # set back any unused args
+        set -- "$@" "$opt"
+    esac
+  done
+  shift # remove the EOL token
+fi
+
+
 if [ $# -ne 2 -a $# -ne 3 ]; then
   echo "Must provide two or three arguments!\n"
   usage
   exit 1
 fi
+
 
 HOST="$1"
 PORT="$2"
@@ -76,7 +123,7 @@ fi
 while [ $i -le $PORT_END ]; do
   target_port=$(( $i + $offset ))
   echo ">> Access port $i via http://localhost:$target_port"
-  command="$command -L $target_port:localhost:$i"
+  command="$command -L $target_port:$TUNNEL_HOST:$i"
   i=$(($i + 1))
 done
 

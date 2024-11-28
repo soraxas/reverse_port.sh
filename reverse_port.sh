@@ -7,22 +7,32 @@
 
 usage()
 {
-  printf '%s\n' "Usage: $(basename "$0") <REMOTE_HOST> <PORT>-[PORT_END] [PORT_MAP_TO]"
-  printf '%s\n' "                        [-t|--tunnel TUNNEL_HOST]"
-  printf '\t%s\t%s\n' 'REMOTE_HOST'   "What you'd normally type to ssh into remote host"
-  printf '\t%s\t\t%s\n' '    '          "This is the host that your machine can directly connects to."
-  printf '\t%s\t\t%s\n' '    '          "e.g. user@hostname, ssh-alias"
-  printf '\t%s\t\t%s\n' 'PORT'          "Integer of port"
-  printf '\t%s\t\t%s\n' '    '          "e.g. 9000"
-  printf '\t%s\t%s\n' 'PORT_END'        "[Optional] If given, forwards a range of ports (PORT to PORT_END)"
-  printf '\t%s\t%s\n' '        '        "e.g. 9020"
-  printf '\t%s\t%s\n' 'PORT_MAP_TO'     "[Optional] If given, maps PORT to this given port."
-  printf '\t%s\t%s\n' '           '     "If forwarding a range of ports, the mapped port end is always implied"
-  printf '\t%s\t%s\n' '           '     "as the corresponding offsetted ports."
-  printf '\t%s\t%s\n' '        '        "e.g. 8000"
-  printf '\t%s\t%s\n' 'TUNNEL_HOST'     "[Optional] This is the target host of the tunnel."
-  printf '\t%s\t%s\n' '           '     "This should be a host that REMOTE_HOST can connects to."
-  printf '\t%s\t%s\n' '           '     "Defaults to 'localhost' (of the REMOTE_HOST)."
+  cat <<EOF
+Usage: $(basename "$0") <REMOTE_HOST> <PORT>-[PORT_END] [PORT_MAP_TO] [OPTIONS]
+
+Description:
+  This script forwards a range of ports (or a single port) from a remote host to the local machine (or vice versa for reverse SSH).
+  It allows you to specify a range of ports and map them to local ports, with an optional tunnel to another host.
+
+Arguments:
+  REMOTE_HOST      The remote host to SSH into (e.g., user@hostname or ssh-alias).
+  PORT             The starting port (e.g., 9000).
+  PORT_END         [Optional] The ending port for the range. If not specified, a single port is used.
+  PORT_MAP_TO      [Optional] The local port to map to (defaults to the same port as the remote).
+
+Options:
+  -t, --tunnel TUNNEL_HOST  The target host for the tunnel (defaults to 'localhost' on REMOTE_HOST).
+  -r, --reverse             Reverse SSH: Forward local ports to the remote host instead of remote to local.
+  -h, --help                Show this help message and exit.
+
+Examples:
+  $(basename "$0") user@remotehost 8080        Forward port 8080 from the remote host to localhost:8080.
+  $(basename "$0") user@remotehost 9000-9020    Forward ports 9000-9020 from the remote host to localhost:9000-9020.
+  $(basename "$0") user@remotehost 9000 8000    Forward port 9000 from the remote host to local port 8000.
+  $(basename "$0") user@remotehost 9000-9020 8000  Forward ports 9000-9020 from the remote host to local ports 8000-8020.
+  $(basename "$0") user@remotehost 9000-9020 --reverse    Reverse forward ports 9000-9020 from local to remote.
+
+EOF
 }
 
 check_integer()
@@ -80,7 +90,7 @@ fi
 
 
 if [ $# -ne 2 -a $# -ne 3 ]; then
-  echo "Must provide two or three arguments!\n"
+  printf '%s\n\n' "> Must provide two or three arguments!"
   usage
   exit 1
 fi

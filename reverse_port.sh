@@ -35,6 +35,8 @@ check_integer()
 
 TUNNEL_HOST=localhost
 
+DIRECTION="-L"
+
 # shellcheck disable=SC2116,SC2028
 EOL=$(echo '\00\07\01\00')
 if [ "$#" != 0 ]; then
@@ -45,6 +47,9 @@ if [ "$#" != 0 ]; then
       -h|--help)
         usage
         exit 0
+        ;;
+      -r|--reverse)
+        DIRECTION="-R"
         ;;
       -t|--tunnel)
         TUNNEL_HOST="$1"
@@ -123,7 +128,7 @@ fi
 while [ $i -le $PORT_END ]; do
   target_port=$(( $i + $offset ))
   echo ">> Access port $i via http://localhost:$target_port"
-  command="$command -L $target_port:$TUNNEL_HOST:$i"
+  command="$command $DIRECTION $target_port:$TUNNEL_HOST:$i"
   i=$(($i + 1))
 done
 

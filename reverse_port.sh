@@ -9,7 +9,8 @@ usage() {
   script_name=$(basename "$0")
 
   cat <<EOF
-Usage: $script_name <REMOTE_HOST> <PORT>-[PORT_END] [PORT_MAP_TO] [-t|--tunnel TUNNEL_HOST] [-r|--reverse]
+Usage: $script_name <REMOTE_HOST> <PORT>-[PORT_END] [PORT_MAP_TO] [-t|--tunnel TUNNEL_HOST]
+        [-r|--reverse] [-b|--bind-address BIND_ADDRESS]
 Description:
     This script helps to forward ports (or a range of ports) from a local machine to a remote host (or reverse).
     You can either provide a single port, a range of ports (PORT-PORT_END), or a comma-separated list of ports.
@@ -43,6 +44,8 @@ Examples:
     TUNNEL_HOST    [Optional] This is the target host of the tunnel.
                    This should be a host that REMOTE_HOST can connects to.
                    Defaults to 'localhost' (of the REMOTE_HOST).
+    BIND_ADDRESS   [Optional] This is the address to bind the forwarded ports to.
+                   If none is given, ssh by default binds to loopback interface.
 EOF
 }
 
@@ -72,10 +75,10 @@ if [ "$#" != 0 ]; then
         ;;
       -t|--tunnel)
         TUNNEL_HOST="$1"
-        if [ -n "TUNNEL_HOST" ]; then
-          usage
-          exit 1
-        fi
+        shift
+        ;;
+      -b|--bind-address)
+        BIND_ADDRESS="$1:"
         shift
         ;;
       --*=*)  # convert '--name=arg' to '--name' 'arg'
@@ -177,7 +180,7 @@ for j in "${!PORTS[@]}"; do
   offset=$(( ${MAP_TO_PORTS[$j]} - ${PORTS[$j]} ))
   target_port=$(( ${PORTS[$j]} + $offset ))
   echo ">> Access port ${PORTS[$j]} via http://localhost:$target_port"
-  command="$command $FLAGS $target_port:$TUNNEL_HOST:${PORTS[$j]}"
+  command="$command $FLAGS $BIND_ADDRESS$target_port:$TUNNEL_HOST:${PORTS[$j]}"
 done
 
 

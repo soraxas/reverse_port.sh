@@ -77,6 +77,9 @@ if [ "$#" != 0 ]; then
         TUNNEL_HOST="$1"
         shift
         ;;
+      --debug)
+        set -x
+        ;;
       -b|--bind-address)
         BIND_ADDRESS="$1:"
         shift
@@ -158,7 +161,7 @@ else
   # Single port
   check_integer "$PORT"
   PORT_END="$PORT"
-  MAP_TO="$PORT"
+  MAP_TO="${MAP_TO:-$PORT}"
 fi
 
 # Construct multi port command
